@@ -16,6 +16,10 @@
   .chip.easter { border-color: #ffb347; color: #e67e00; }
   .chip.easter:hover { background: #fff4e0; border-color: #e67e00; }
   .chip.easter.active { background: #fff4e0; border-color: #e67e00; color: #e67e00; }
+  .search-wrap { margin-bottom: 12px; }
+  .search-input { width: 100%; padding: 9px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; box-sizing: border-box; outline: none; }
+  .search-input:focus { border-color: #4a7cf7; }
+  .no-result { font-size: 13px; color: #aaa; margin-bottom: 24px; }
   .connector { display: flex; align-items: center; gap: 6px; color: #bbb; font-size: 12px; margin-bottom: 24px; }
   .connector-line { flex: 1; height: 1px; background: #eee; }
   .result-card { border: 1px solid #4a7cf7; border-radius: 12px; background: #e8f0fe; padding: 16px 20px; animation: fadeIn .25s ease; }
@@ -69,7 +73,11 @@
 
   <div id="step2" class="hidden">
     <div class="step-label">② 처리 목적 선택</div>
+    <div class="search-wrap">
+      <input class="search-input" type="text" id="search-input" placeholder="🔍 키워드 검색 (예: 폐기, 재고, 샘플)" oninput="filterPurposes()" />
+    </div>
     <div class="chip-grid" id="purpose-chips"></div>
+    <p class="no-result hidden" id="no-result">검색 결과가 없습니다.</p>
   </div>
 
   <div class="connector hidden" id="conn2">
@@ -128,7 +136,7 @@ const data = {
     "불특정 다수 대상 이벤트, 행사를 위해 홍보 목적으로 출고하는 경우": { type: "홍보용", desc: "불특정 다수를 대상으로 이벤트·행사 홍보를 목적으로 출고하는 유형입니다." },
     "품목상태 및 포장상태 확인 목적으로 출고하는 경우": { type: "샘플", desc: "품목 상태 및 포장 상태 확인을 목적으로 출고하는 유형입니다." },
     "검역 목적으로 출고하는 경우": { type: "검역용 샘플", desc: "검역을 목적으로 출고하는 유형입니다." },
-    "그 외": { type: "메롱 😛", desc: "그런 건 없어요~ 담당자한테 직접 물어보세요 😄", easter: true }
+    "그 외": { type: "메롱 😛", desc: "조금 더 고민해보아요 😄", easter: true }
   },
   "저장품": {
     "물류창고에서 출고 후 이동·타처보관 중 분실되는 재고": { type: "재고손실", desc: "물류창고 출고 후 이동 또는 타처 보관 중 분실된 재고를 처리하는 유형입니다." },
@@ -200,6 +208,8 @@ const data = {
   }
 };
 
+let currentAcct = null;
+
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -215,25 +225,44 @@ function renderAccounts() {
 }
 
 function selectAccount(acct) {
+  currentAcct = acct;
   document.querySelectorAll('#account-chips .chip').forEach(c => {
     c.classList.toggle('active', c.textContent === acct);
   });
-  hide('step2'); hide('conn1'); hide('conn2'); hide('step3');
-  renderPurposes(acct);
+  document.getElementById('search-input').value = '';
+  hide('conn2'); hide('step3');
+  renderPurposes(acct, '');
   show('conn1'); show('step2');
 }
 
-function renderPurposes(acct) {
+function filterPurposes() {
+  const keyword = document.getElementById('search-input').value;
+  if (currentAcct) renderPurposes(currentAcct, keyword);
+  hide('conn2'); hide('step3');
+}
+
+function renderPurposes(acct, keyword) {
   const wrap = document.getElementById('purpose-chips');
   wrap.innerHTML = '';
-  Object.keys(data[acct]).forEach(purpose => {
-    const result = data[acct][purpose];
-    const c = document.createElement('button');
-    c.className = 'chip' + (result.easter ? ' easter' : '');
-    c.textContent = purpose;
-    c.onclick = () => selectPurpose(acct, purpose);
-    wrap.appendChild(c);
-  });
+  const noResult = document.getElementById('no-result');
+  const purposes = Object.keys(data[acct]);
+  const filtered = keyword
+    ? purposes.filter(p => p.includes(keyword))
+    : purposes;
+
+  if (filtered.length === 0) {
+    noResult.classList.remove('hidden');
+  } else {
+    noResult.classList.add('hidden');
+    filtered.forEach(purpose => {
+      const result = data[acct][purpose];
+      const c = document.createElement('button');
+      c.className = 'chip' + (result.easter ? ' easter' : '');
+      c.textContent = purpose;
+      c.onclick = () => selectPurpose(acct, purpose);
+      wrap.appendChild(c);
+    });
+  }
 }
 
 function selectPurpose(acct, purpose) {
@@ -252,8 +281,11 @@ function selectPurpose(acct, purpose) {
 }
 
 function reset() {
+  currentAcct = null;
   hide('conn1'); hide('step2'); hide('conn2'); hide('step3');
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('search-input').value = '';
+  document.getElementById('no-result').classList.add('hidden');
 }
 
 renderAccounts();
