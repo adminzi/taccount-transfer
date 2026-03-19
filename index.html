@@ -28,46 +28,88 @@
   .result-desc { font-size: 13px; color: #555; line-height: 1.6; margin: 0; }
   .reset-btn { margin-top: 16px; font-size: 12px; color: #888; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 0; }
   .hidden { display: none; }
+
+  /* 비밀번호 화면 */
+  #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+  #lock-screen h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  #lock-screen p { font-size: 13px; color: #888; margin-bottom: 24px; }
+  #pw-input { padding: 10px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 200px; text-align: center; outline: none; }
+  #pw-input:focus { border-color: #4a7cf7; }
+  #pw-btn { margin-top: 12px; padding: 10px 24px; background: #4a7cf7; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+  #pw-btn:hover { background: #3a6ce7; }
+  #pw-error { margin-top: 10px; font-size: 12px; color: #e74c3c; display: none; }
 </style>
 </head>
 <body>
 
-<h2>타계정대체 Decision Tree</h2>
-<p class="sub">품목 계정과 처리 목적을 선택하면 계정대체 유형을 안내해드립니다.</p>
-
-<div id="step1">
-  <div class="step-label">① 품목 계정 선택</div>
-  <div class="chip-grid" id="account-chips"></div>
+<!-- 비밀번호 잠금 화면 -->
+<div id="lock-screen">
+  <h3>🔒 접근 제한</h3>
+  <p>비밀번호를 입력해주세요.</p>
+  <input type="password" id="pw-input" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter') checkPw()" />
+  <button id="pw-btn" onclick="checkPw()">확인</button>
+  <p id="pw-error">비밀번호가 올바르지 않습니다.</p>
 </div>
 
-<div class="connector hidden" id="conn1">
-  <div class="connector-line"></div>
-  <span>↓</span>
-  <div class="connector-line"></div>
-</div>
+<!-- 메인 콘텐츠 -->
+<div id="main-content" class="hidden">
+  <h2>타계정대체 Decision Tree</h2>
+  <p class="sub">품목 계정과 처리 목적을 선택하면 계정대체 유형을 안내해드립니다.</p>
 
-<div id="step2" class="hidden">
-  <div class="step-label">② 처리 목적 선택</div>
-  <div class="chip-grid" id="purpose-chips"></div>
-</div>
-
-<div class="connector hidden" id="conn2">
-  <div class="connector-line"></div>
-  <span>↓</span>
-  <div class="connector-line"></div>
-</div>
-
-<div id="step3" class="hidden">
-  <div class="step-label">③ 계정대체 유형</div>
-  <div class="result-card" id="result-card">
-    <span class="result-badge" id="result-badge">대체유형</span>
-    <p class="result-title" id="result-title"></p>
-    <p class="result-desc" id="result-desc"></p>
+  <div id="step1">
+    <div class="step-label">① 품목 계정 선택</div>
+    <div class="chip-grid" id="account-chips"></div>
   </div>
-  <button class="reset-btn" onclick="reset()">↺ 처음부터 다시 선택</button>
+
+  <div class="connector hidden" id="conn1">
+    <div class="connector-line"></div>
+    <span>↓</span>
+    <div class="connector-line"></div>
+  </div>
+
+  <div id="step2" class="hidden">
+    <div class="step-label">② 처리 목적 선택</div>
+    <div class="chip-grid" id="purpose-chips"></div>
+  </div>
+
+  <div class="connector hidden" id="conn2">
+    <div class="connector-line"></div>
+    <span>↓</span>
+    <div class="connector-line"></div>
+  </div>
+
+  <div id="step3" class="hidden">
+    <div class="step-label">③ 계정대체 유형</div>
+    <div class="result-card" id="result-card">
+      <span class="result-badge" id="result-badge">대체유형</span>
+      <p class="result-title" id="result-title"></p>
+      <p class="result-desc" id="result-desc"></p>
+    </div>
+    <button class="reset-btn" onclick="reset()">↺ 처음부터 다시 선택</button>
+  </div>
 </div>
 
 <script>
+const PASSWORD = "wrw1020";
+
+function checkPw() {
+  const input = document.getElementById('pw-input').value;
+  if (input === PASSWORD) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('main-content').classList.remove('hidden');
+    sessionStorage.setItem('auth', 'true');
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+if (sessionStorage.getItem('auth') === 'true') {
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('main-content').classList.remove('hidden');
+}
+
 const data = {
   "제품": {
     "VAS, ORG 소분 생산 시 감량 발생한 경우": { type: "소분생산감량", desc: "소분 생산(VAS/ORG) 과정에서 발생한 중량 손실분을 ERP에서 처리하는 유형입니다." },
