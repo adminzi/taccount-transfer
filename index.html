@@ -81,4 +81,75 @@ const data = {
       easter: false
     },
     "포장 완료된 제품이 판매 불가능해 베이스로 전환한 경우": {
-      type: "창고제품
+      type: "창고제품EP베이스_출고",
+      desc: "포장이 완료된 완제품이 판매 불가 상태가 되어 원료(베이스) 형태로 되돌릴 때 사용하는 유형입니다.",
+      easter: false
+    },
+    "그 외": {
+      type: "메롱 😛",
+      desc: "그런 건 없어요~ 담당자한테 직접 물어보세요 😄",
+      easter: true
+    }
+  }
+};
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+function renderAccounts() {
+  const wrap = document.getElementById('account-chips');
+  Object.keys(data).forEach(acct => {
+    const c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = acct;
+    c.onclick = () => selectAccount(acct);
+    wrap.appendChild(c);
+  });
+}
+
+function selectAccount(acct) {
+  document.querySelectorAll('#account-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.textContent === acct);
+  });
+  hide('step2'); hide('conn1'); hide('conn2'); hide('step3');
+  renderPurposes(acct);
+  show('conn1'); show('step2');
+}
+
+function renderPurposes(acct) {
+  const wrap = document.getElementById('purpose-chips');
+  wrap.innerHTML = '';
+  Object.keys(data[acct]).forEach(purpose => {
+    const result = data[acct][purpose];
+    const c = document.createElement('button');
+    c.className = 'chip' + (result.easter ? ' easter' : '');
+    c.textContent = purpose;
+    c.onclick = () => selectPurpose(acct, purpose);
+    wrap.appendChild(c);
+  });
+}
+
+function selectPurpose(acct, purpose) {
+  document.querySelectorAll('#purpose-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.textContent === purpose);
+  });
+  const result = data[acct][purpose];
+  const card = document.getElementById('result-card');
+  const badge = document.getElementById('result-badge');
+  card.className = 'result-card' + (result.easter ? ' easter' : '');
+  badge.className = 'result-badge' + (result.easter ? ' easter' : '');
+  badge.textContent = result.easter ? '🎉 이스터에그' : '대체유형';
+  document.getElementById('result-title').textContent = result.type;
+  document.getElementById('result-desc').textContent = result.desc;
+  hide('step3'); show('conn2'); show('step3');
+}
+
+function reset() {
+  hide('conn1'); hide('step2'); hide('conn2'); hide('step3');
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+}
+
+renderAccounts();
+</script>
+</body>
+</html>
